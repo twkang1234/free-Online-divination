@@ -1,475 +1,336 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>免費線上占卜-單宮奇門</title>
-    <meta name="description" content="免費線上奇門遁甲占卜工具，隨機選擇八神、星門、八門，提供天干地支組合解讀">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>免費線上占卜｜單宮奇門小工具（八神・九星・八門）</title>
+  <meta name="description" content="免費線上奇門遁甲占卜工具：一鍵隨機八神、九星、八門與天干地支斷語。點擊複製提示詞，帶到你慣用的 AI 助手快速解盤。">
+
+  <!-- 索引與權重 -->
+  <link rel="canonical" href="https://twkang1234.github.io/free-Online-divination/">
+  <meta name="robots" content="index,follow" />
+
+  <!-- Open Graph / 分享預覽 -->
+  <meta property="og:title" content="免費線上占卜｜單宮奇門小工具" />
+  <meta property="og:description" content="免費線上奇門遁甲占卜工具：隨機八神、九星、八門與天干地支斷語，一鍵複製帶你快速解盤。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://twkang1234.github.io/free-Online-divination/" />
+
+  <!-- FAQ 結構化資料 -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type":"Question",
+        "name":"免費線上占卜怎麼用？",
+        "acceptedAnswer":{"@type":"Answer","text":"點「八神星門」按鈕依序產生八神、九星、八門；點「天干地支」按鈕產生天干與地支組合並顯示斷語。完成後點擊結果即可複製，帶到你慣用的 AI 助手解盤。"}
+      },
+      {
+        "@type":"Question",
+        "name":"可以占感情或工作嗎？",
+        "acceptedAnswer":{"@type":"Answer","text":"可以。建議把問題具體化，例如「問測[感情復合]…」或「問測[工作升遷]…」，讓解讀更聚焦。"}
+      },
+      {
+        "@type":"Question",
+        "name":"這個工具和付費占卜有什麼差別？",
+        "acceptedAnswer":{"@type":"Answer","text":"免費工具適合先釐清方向；當問題牽涉高風險決策或需要情境化推演時，建議改用一對一付費諮詢，由專業占卜師結合盤局與背景做完整分析。"}
+      }
+    ]
+  }
+  </script>
+
+  <!-- Libraries（CDN） -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet" />
 </head>
-<body>
-    <div id="root"></div>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100">
 
-    <script type="text/babel">
-        function RandomNumberPicker() {
-            const [topNumber, setTopNumber] = React.useState('?');
-            const [topRightNumber, setTopRightNumber] = React.useState('?');
-            const [middleNumber, setMiddleNumber] = React.useState('?');
-            const [middleRightNumber, setMiddleRightNumber] = React.useState('?');
-            const [bottomNumber, setBottomNumber] = React.useState('?');
-            const [bottomRightNumber, setBottomRightNumber] = React.useState('?');
-            const [isAnimating, setIsAnimating] = React.useState([false, false, false, false, false, false]);
-            const [isCompleted, setIsCompleted] = React.useState([false, false, false, false, false, false]);
-            const [hasStarted, setHasStarted] = React.useState(false);
-            const [leftStarted, setLeftStarted] = React.useState(false);
-            const [rightStarted, setRightStarted] = React.useState(false);
-            const [circleControlUsed, setCircleControlUsed] = React.useState(false);
-            const [isCopied, setIsCopied] = React.useState(false);
-            const [leftCopied, setLeftCopied] = React.useState(false);
-            const [rightCopied, setRightCopied] = React.useState(false);
-            const [showTopCircle, setShowTopCircle] = React.useState(true);
+  <!-- 1) React 小軟體的容器（只放這個） -->
+  <div id="root"></div>
 
-            // 數字對應的中文字符
-            const numberToText = {
-                '1': '值符',
-                '2': '螣蛇',
-                '3': '太陰',
-                '4': '六合',
-                '5': '白虎',
-                '6': '玄武',
-                '7': '九地',
-                '8': '九天'
-            };
+  <!-- 2) React App 腳本（等 DOM 準備好再執行，避免載入競賽） -->
+  <script>
+  window.addEventListener('DOMContentLoaded', function () {
+    (function () {
+      const e = React.createElement;
 
-            // 中央數字對應的星門
-            const numberToStar = {
-                '1': '天蓬',
-                '2': '天任',
-                '3': '天沖',
-                '4': '天輔',
-                '5': '天禽',
-                '6': '天英',
-                '7': '天芮',
-                '8': '天柱',
-                '9': '天心'
-            };
+      const numberToText = {'1':'值符','2':'螣蛇','3':'太陰','4':'六合','5':'白虎','6':'玄武','7':'九地','8':'九天'};
+      const numberToStar = {'1':'天蓬','2':'天任','3':'天沖','4':'天輔','5':'天禽','6':'天英','7':'天芮','8':'天柱','9':'天心'};
+      const numberToDoor = {'1':'休門','2':'生門','3':'傷門','4':'杜門','5':'景門','6':'死門','7':'驚門','8':'開門'};
+      const numberToTianGan = {'1':'乙','2':'丙','3':'丁','4':'戊','5':'己','6':'庚','7':'辛'};
+      const numberToDiZhi  = {'1':'乙','2':'丙','3':'丁','4':'戊','5':'己','6':'庚','7':'辛'}; // 示意（可日後擴為 12 地支）
 
-            // 下方數字對應的八門
-            const numberToDoor = {
-                '1': '休門',
-                '2': '生門',
-                '3': '傷門',
-                '4': '杜門',
-                '5': '景門',
-                '6': '死門',
-                '7': '驚門',
-                '8': '開門'
-            };
+      const tianGanDiZhiExplanations = {
+        '乙乙':'乙加乙 (日奇伏吟): 不宜求名求利，只宜安分守己。',
+        '乙丙':'乙加丙 (奇儀順遂): 吉星遷官進職，凶星夫妻反目。',
+        '乙丁':'乙加丁 (奇儀相佐): 利於文書、考試，有人相助。',
+        '乙戊':'乙加戊 (利陰害陽): 門凶事必破敗，門吉尚可謀為。',
+        '乙己':'乙加己 (日奇入墓): 被土暗昧，門凶事凶。',
+        '乙庚':'乙加庚 (日奇被刑): 爭訟不得，夫妻離散。',
+        '乙辛':'乙加辛 (龍逃走): 陰人見喜，男人見災，住處不佳，車輛紛失。',
+        '丙乙':'丙加乙 (日月並行): 公謀私為皆吉。',
+        '丙丙':'丙加丙 (月奇悖師): 文書訴訟，破耗遺失。',
+        '丙丁':'丙加丁 (星奇朱雀): 貴人文書吉利，常人平穩。',
+        '丙戊':'丙加戊 (飛鳥跌穴): 謀為皆順，可獲大利。',
+        '丙己':'丙加己 (火悖入刑): 囚人刑杖，文書不行。',
+        '丙庚':'丙加庚 (熒入太白): 門戶破敗，盜賊耗失。',
+        '丙辛':'丙加辛 (日月相會): 謀事成就，病人不凶。',
+        '丁乙':'丁加乙 (玉女奇生): 人遁格，利於婚姻、文書、私事。',
+        '丁丙':'丁加丙 (星隨月轉): 貴人升高，常人有喜。',
+        '丁丁':'丁加丁 (奇入太陰): 文書即至，喜事遂心。',
+        '丁戊':'丁加戊 (青龍轉光): 官人陞遷，常人威昌。',
+        '丁己':'丁加己 (火入勾陳): 奸私仇冤，事體不明。',
+        '丁庚':'丁加庚 (文書阻隔): 文書阻隔，行人必歸。',
+        '丁辛':'丁加辛 (朱雀入獄): 罪人釋囚，官人失位。',
+        '戊乙':'戊加乙 (青龍合靈): 門吉事吉，門凶事凶。',
+        '戊丙':'戊加丙 (青龍返首): 動作大吉，若遇迫墓則凶。',
+        '戊丁':'戊加丁 (青龍耀明): 官人陞遷，常人吉慶。',
+        '戊戊':'戊加戊 (伏吟): 凡事閉塞，靜守為吉。',
+        '戊己':'戊加己 (貴人入獄): 公私皆不利。',
+        '戊庚':'戊加庚 (值符飛宮): 吉事不吉，凶事更凶。',
+        '戊辛':'戊加辛 (青龍折足): 吉門生助尚可謀，逢凶門則招災失財。',
+        '己乙':'己加乙 (墓神不明): 地戶逢星，宜遁跡隱形。',
+        '己丙':'己加丙 (火悖地戶): 男人冤冤相害，女人必致淫污。',
+        '己丁':'己加丁 (朱雀入墓): 文書詞訟，先曲後直。',
+        '己戊':'己加戊 (犬遇青龍): 門吉謀望遂意，門凶枉勞心機。',
+        '己己':'己加己 (地戶伏陰): 病人必死，百事不遂。',
+        '己庚':'己加庚 (刑格): 利名不利，詞訟先動者不利。',
+        '己辛':'己加辛 (遊魂入墓): 陰人鬼祟，小人作亂。',
+        '庚乙':'庚加乙 (太白逢星): 退吉進凶，謀為不遂。',
+        '庚丙':'庚加丙 (太白入熒): 占賊必來，為客進利，為主破財。',
+        '庚丁':'庚加丁 (亭亭之格): 因私匿或男女關係起官司。',
+        '庚戊':'庚加戊 (天乙伏宮): 百事不可謀，凶。',
+        '庚己':'庚加己 (官符刑格): 文書官司，觸犯刑法。',
+        '庚庚':'庚加庚 (太白同宮): 官災橫禍，兄弟不和。',
+        '庚辛':'庚加辛 (白虎干格): 遠行車折馬死，求財更凶。',
+        '辛乙':'辛加乙 (白虎猖狂): 人亡家敗，遠行多殃，尊長不喜。',
+        '辛丙':'辛加丙 (干合悖師): 熒惑出現，占雨無，占晴旱。',
+        '辛丁':'辛加丁 (獄神得奇): 經商獲倍利，罪人逢赦宥。',
+        '辛戊':'辛加戊 (困龍被傷): 官司破敗，屈抑守分尚可。',
+        '辛己':'辛加己 (入獄自刑): 奴僕背主，有理難伸。',
+        '辛庚':'辛加庚 (白虎出力): 刀刃相接，主客相殘。',
+        '辛辛':'辛加辛 (伏吟): 錯誤、後悔、兇。'
+      };
 
-            // 中間右側數字對應的天干（1-7）
-            const numberToTianGan = {
-                '1': '乙',
-                '2': '丙',
-                '3': '丁',
-                '4': '戊',
-                '5': '己',
-                '6': '庚',
-                '7': '辛'
-            };
+      const getDisplayText = (v, map) => (v === '?' ? '?' : (map[v] || '?'));
+      const getTGZJ = (tg, dz) => (tg === '?' || dz === '?' ? '' : (tianGanDiZhiExplanations[tg + dz] || ''));
 
-            // 下方右側數字對應的地支（1-7）
-            const numberToDiZhi = {
-                '1': '乙',
-                '2': '丙',
-                '3': '丁',
-                '4': '戊',
-                '5': '己',
-                '6': '庚',
-                '7': '辛'
-            };
+      function RandomNumberPicker() {
+        const [topNumber, setTopNumber] = React.useState('?');
+        const [topRightNumber, setTopRightNumber] = React.useState('?'); // 佔位保留
+        const [middleNumber, setMiddleNumber] = React.useState('?');
+        const [middleRightNumber, setMiddleRightNumber] = React.useState('?');
+        const [bottomNumber, setBottomNumber] = React.useState('?');
+        const [bottomRightNumber, setBottomRightNumber] = React.useState('?');
 
-            // 天干地支組合解釋
-            const tianGanDiZhiExplanations = {
-                '乙乙': '乙加乙 (日奇伏吟): 不宜求名求利，只宜安分守己。',
-                '乙丙': '乙加丙 (奇儀順遂): 吉星遷官進職，凶星夫妻反目。',
-                '乙丁': '乙加丁 (奇儀相佐): 利於文書、考試，有人相助。',
-                '乙戊': '乙加戊 (利陰害陽): 門凶事必破敗，門吉尚可謀為。',
-                '乙己': '乙加己 (日奇入墓): 被土暗昧，門凶事凶。',
-                '乙庚': '乙加庚 (日奇被刑): 爭訟不得，夫妻離散。',
-                '乙辛': '乙加辛 (龍逃走): 陰人見喜，男人見災，住處不佳，車輛紛失。',
-                '丙乙': '丙加乙 (日月並行): 公謀私為皆吉。',
-                '丙丙': '丙加丙 (月奇悖師): 文書訴訟，破耗遺失。',
-                '丙丁': '丙加丁 (星奇朱雀): 貴人文書吉利，常人平穩。',
-                '丙戊': '丙加戊 (飛鳥跌穴): 謀為皆順，可獲大利。',
-                '丙己': '丙加己 (火悖入刑): 囚人刑杖，文書不行。',
-                '丙庚': '丙加庚 (熒入太白): 门户破败，盜賊耗失。',
-                '丙辛': '丙加辛 (日月相會): 謀事成就，病人不凶。',
-                '丁乙': '丁加乙 (玉女奇生): 人遁格，利於婚姻、文書、私事。',
-                '丁丙': '丁加丙 (星隨月轉): 貴人升高，常人有喜。',
-                '丁丁': '丁加丁 (奇入太陰): 文書即至，喜事遂心。',
-                '丁戊': '丁加戊 (青龍轉光): 官人陞遷，常人威昌。',
-                '丁己': '丁加己 (火入勾陳): 奸私仇冤，事體不明。',
-                '丁庚': '丁加庚 (文書阻隔): 文書阻隔，行人必歸。',
-                '丁辛': '丁加辛 (朱雀入獄): 罪人釋囚，官人失位。',
-                '戊乙': '戊加乙 (青龍合靈): 門吉事吉，門凶事凶。',
-                '戊丙': '戊加丙 (青龍返首): 動作大吉，若遇迫墓則凶。',
-                '戊丁': '戊加丁 (青龍耀明): 官人陞遷，常人吉慶。',
-                '戊戊': '戊加戊 (伏吟): 凡事閉塞，靜守為吉。',
-                '戊己': '戊加己 (貴人入獄): 公私皆不利。',
-                '戊庚': '戊加庚 (值符飛宮): 吉事不吉，凶事更凶。',
-                '戊辛': '戊加辛 (青龍折足): 吉門生助尚可謀，逢凶門則招災失財。',
-                '己乙': '己加乙 (墓神不明): 地戶逢星，宜遁跡隱形。',
-                '己丙': '己加丙 (火悖地戶): 男人冤冤相害，女人必致淫污。',
-                '己丁': '己加丁 (朱雀入墓): 文書詞訟，先曲後直。',
-                '己戊': '己加戊 (犬遇青龍): 門吉謀望遂意，門凶枉勞心機。',
-                '己己': '己加己 (地戶伏陰): 病人必死，百事不遂。',
-                '己庚': '己加庚 (刑格): 利名不利，詞訟先動者不利。',
-                '己辛': '己加辛 (遊魂入墓): 陰人鬼祟，小人作亂。',
-                '庚乙': '庚加乙 (太白逢星): 退吉進凶，謀為不遂。',
-                '庚丙': '庚加丙 (太白入熒): 占賊必來，為客進利，為主破財。',
-                '庚丁': '庚加丁 (亭亭之格): 因私匿或男女關係起官司。',
-                '庚戊': '庚加戊 (天乙伏宮): 百事不可謀，凶。',
-                '庚己': '庚加己 (官符刑格): 文書官司，觸犯刑法。',
-                '庚庚': '庚加庚 (太白同宮): 官災橫禍，兄弟不和。',
-                '庚辛': '庚加辛 (白虎干格): 遠行車折馬死，求財更凶。',
-                '辛乙': '辛加乙 (白虎猖狂): 人亡家敗，遠行多殃，尊長不喜。',
-                '辛丙': '辛加丙 (干合悖師): 熒惑出現，占雨無，占晴旱。',
-                '辛丁': '辛加丁 (獄神得奇): 經商獲倍利，罪人逢赦宥。',
-                '辛戊': '辛加戊 (困龍被傷): 官司破敗，屈抑守分尚可。',
-                '辛己': '辛加己 (入獄自刑): 奴僕背主，有理難伸。',
-                '辛庚': '辛加庚 (白虎出力): 刀刃相接，主客相殘。',
-                '辛辛': '辛加辛 (伏吟): 錯誤、後悔、兇。'
-            };
+        const [isAnimating, setIsAnimating] = React.useState([false,false,false,false,false,false]);
+        const [isCompleted, setIsCompleted] = React.useState([false,false,false,false,false,false]);
+        const [leftStarted, setLeftStarted] = React.useState(false);
+        const [rightStarted, setRightStarted] = React.useState(false);
+        const [leftCopied, setLeftCopied] = React.useState(false);
+        const [rightCopied, setRightCopied] = React.useState(false);
 
-            // 獲取天干地支組合解釋
-            const getTianGanDiZhiExplanation = (tianGan, diZhi) => {
-                if (tianGan === '?' || diZhi === '?') return '';
-                const key = tianGan + diZhi;
-                return tianGanDiZhiExplanations[key] || '';
-            };
-
-            // 安全的顯示函數
-            const getDisplayText = (value, mapping) => {
-                if (value === '?') return '?';
-                return mapping[value] || '?';
-            };
-
-            // 複製左側結果到剪貼簿
-            const copyLeftResult = async () => {
-                if (isCompleted[0] && isCompleted[1] && isCompleted[3]) {
-                    const resultText = `問測[工作] [${getDisplayText(topNumber, numberToText)} + ${getDisplayText(middleNumber, numberToStar)} + ${getDisplayText(bottomNumber, numberToDoor)}] 未來趨勢如何?`;
-                    
-                    try {
-                        await navigator.clipboard.writeText(resultText);
-                        setLeftCopied(true);
-                        setTimeout(() => setLeftCopied(false), 2000);
-                    } catch (err) {
-                        const textArea = document.createElement('textarea');
-                        textArea.value = resultText;
-                        document.body.appendChild(textArea);
-                        textArea.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(textArea);
-                        setLeftCopied(true);
-                        setTimeout(() => setLeftCopied(false), 2000);
-                    }
-                }
-            };
-
-            // 複製右側結果到剪貼簿
-            const copyRightResult = async () => {
-                if (isCompleted[2] && isCompleted[4]) {
-                    const tianGan = getDisplayText(middleRightNumber, numberToTianGan);
-                    const diZhi = getDisplayText(bottomRightNumber, numberToDiZhi);
-                    const explanation = getTianGanDiZhiExplanation(tianGan, diZhi);
-                    const resultText = explanation || `天干+地支組合 [${tianGan} + ${diZhi}]`;
-                    
-                    try {
-                        await navigator.clipboard.writeText(resultText);
-                        setRightCopied(true);
-                        setTimeout(() => setRightCopied(false), 2000);
-                    } catch (err) {
-                        const textArea = document.createElement('textarea');
-                        textArea.value = resultText;
-                        document.body.appendChild(textArea);
-                        textArea.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(textArea);
-                        setRightCopied(true);
-                        setTimeout(() => setRightCopied(false), 2000);
-                    }
-                }
-            };
-
-            const generateRandomNumber = (index) => {
-                if (isAnimating[index] || isCompleted[index]) return;
-                
-                // 設置動畫狀態
-                setIsAnimating(prev => {
-                    const newAnimating = [...prev];
-                    newAnimating[index] = true;
-                    return newAnimating;
-                });
-                
-                // 動畫效果：持續4秒的隨機變化
-                const animationInterval = setInterval(() => {
-                    let randomNum;
-                    if (index === 1) {
-                        // 中央組使用 1-9
-                        randomNum = Math.floor(Math.random() * 9) + 1;
-                    } else if (index === 2) {
-                        // 中間右側天干使用 1-7
-                        randomNum = Math.floor(Math.random() * 7) + 1;
-                    } else if (index === 4) {
-                        // 下方右側地支使用 1-7
-                        randomNum = Math.floor(Math.random() * 7) + 1;
-                    } else {
-                        // 其他組使用 1-8
-                        randomNum = Math.floor(Math.random() * 8) + 1;
-                    }
-                    
-                    if (index === 0) setTopNumber(randomNum.toString());
-                    else if (index === 1) setMiddleNumber(randomNum.toString());
-                    else if (index === 2) setMiddleRightNumber(randomNum.toString());
-                    else if (index === 3) setBottomNumber(randomNum.toString());
-                    else setBottomRightNumber(randomNum.toString());
-                }, 100); // 每100毫秒變化一次
-                
-                // 4秒後停止動畫並設置最終結果
-                setTimeout(() => {
-                    clearInterval(animationInterval);
-                    
-                    // 最終結果
-                    let finalNumber;
-                    if (index === 1) {
-                        // 中央組使用 1-9
-                        finalNumber = Math.floor(Math.random() * 9) + 1;
-                    } else if (index === 2) {
-                        // 中間右側天干使用 1-7
-                        finalNumber = Math.floor(Math.random() * 7) + 1;
-                    } else if (index === 4) {
-                        // 下方右側地支使用 1-7
-                        finalNumber = Math.floor(Math.random() * 7) + 1;
-                    } else {
-                        // 其他組使用 1-8
-                        finalNumber = Math.floor(Math.random() * 8) + 1;
-                    }
-                    
-                    if (index === 0) setTopNumber(finalNumber.toString());
-                    else if (index === 1) setMiddleNumber(finalNumber.toString());
-                    else if (index === 2) setMiddleRightNumber(finalNumber.toString());
-                    else if (index === 3) setBottomNumber(finalNumber.toString());
-                    else setBottomRightNumber(finalNumber.toString());
-                    
-                    // 停止動畫
-                    setIsAnimating(prev => {
-                        const newAnimating = [...prev];
-                        newAnimating[index] = false;
-                        return newAnimating;
-                    });
-                    
-                    // 標記為已完成
-                    setIsCompleted(prev => {
-                        const newCompleted = [...prev];
-                        newCompleted[index] = true;
-                        return newCompleted;
-                    });
-                }, 4000); // 4秒後停止
-            };
-
-            const startLeftProcess = () => {
-                if (leftStarted) return;
-                setLeftStarted(true);
-                
-                // 依序執行八神、星門、八門（索引 0, 1, 3）
-                generateRandomNumber(0); // 八神
-                setTimeout(() => generateRandomNumber(1), 4500);  // 星門
-                setTimeout(() => generateRandomNumber(3), 9000);  // 八門
-            };
-
-            const startRightProcess = () => {
-                if (rightStarted) return;
-                setRightStarted(true);
-                
-                // 依序執行右側兩個變數（索引 2, 4）
-                generateRandomNumber(2); // 天干
-                setTimeout(() => generateRandomNumber(4), 4500);  // 地支
-            };
-
-            return React.createElement('div', {
-                className: "flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8"
-            }, [
-                React.createElement('div', {
-                    key: 'header',
-                    className: "text-center mb-8 w-full flex flex-col items-center"
-                }, [
-                    React.createElement('h1', {
-                        key: 'title',
-                        className: "text-3xl font-bold text-gray-800 mb-2 text-center"
-                    }, '免費線上占卜'),
-                    React.createElement('p', {
-                        key: 'subtitle',
-                        className: "text-gray-600 text-center"
-                    }, '點擊按鈕隨機選擇八神、星門、八門'),
-                    React.createElement('p', {
-                        key: 'instruction',
-                        className: "text-gray-500 text-sm text-center mt-1"
-                    }, '得到最後結果　複製提示詞　到自己喜好的ＡＩ去幫助你解盤')
-                ]),
-
-                // 方框顯示區域
-                React.createElement('div', {
-                    key: 'main-area',
-                    className: "flex flex-col items-center space-y-6 mb-8"
-                }, [
-                    React.createElement('div', {
-                        key: 'display-box',
-                        className: "w-64 h-64 bg-white border-4 border-gray-300 rounded-lg shadow-lg flex flex-col items-center justify-center space-y-6"
-                    }, [
-                        // 上方區域：八神
-                        React.createElement('div', {
-                            key: 'top-area',
-                            className: "flex items-center justify-center"
-                        }, 
-                            React.createElement('span', {
-                                className: `text-3xl font-bold text-indigo-600 transition-all duration-200 ${isAnimating[0] ? 'scale-110 text-orange-500' : 'scale-100'}`
-                            }, getDisplayText(topNumber, numberToText))
-                        ),
-                        
-                        // 中間區域：星門和天干
-                        React.createElement('div', {
-                            key: 'middle-area',
-                            className: "flex items-center space-x-4"
-                        }, [
-                            React.createElement('span', {
-                                key: 'star',
-                                className: `text-3xl font-bold text-indigo-600 transition-all duration-200 ${isAnimating[1] ? 'scale-110 text-orange-500' : 'scale-100'}`
-                            }, getDisplayText(middleNumber, numberToStar)),
-                            
-                            React.createElement('span', {
-                                key: 'tiangan',
-                                className: `text-2xl font-bold text-red-600 border-2 border-red-400 px-2 py-1 rounded transition-all duration-200 ${isAnimating[2] ? 'scale-110 text-orange-500 border-orange-400' : 'scale-100'}`
-                            }, getDisplayText(middleRightNumber, numberToTianGan))
-                        ]),
-                        
-                        // 下方區域：八門和地支
-                        React.createElement('div', {
-                            key: 'bottom-area',
-                            className: "flex items-center space-x-4"
-                        }, [
-                            React.createElement('span', {
-                                key: 'door',
-                                className: `text-3xl font-bold text-indigo-600 transition-all duration-200 ${isAnimating[3] ? 'scale-110 text-orange-500' : 'scale-100'}`
-                            }, getDisplayText(bottomNumber, numberToDoor)),
-                            
-                            React.createElement('span', {
-                                key: 'dizhi',
-                                className: `text-2xl font-bold text-red-600 border-2 border-red-400 px-2 py-1 rounded transition-all duration-200 ${isAnimating[4] ? 'scale-110 text-orange-500 border-orange-400' : 'scale-100'}`
-                            }, getDisplayText(bottomRightNumber, numberToDiZhi))
-                        ])
-                    ]),
-
-                    // 兩個按鈕
-                    React.createElement('div', {
-                        key: 'buttons',
-                        className: "flex space-x-4"
-                    }, [
-                        React.createElement('button', {
-                            key: 'left-button',
-                            onClick: startLeftProcess,
-                            disabled: leftStarted,
-                            className: `w-20 h-20 rounded-full shadow-lg text-white font-bold text-sm transition-all duration-200 ${leftStarted ? 'bg-gray-400 cursor-not-allowed opacity-50' : 'bg-indigo-500 hover:bg-indigo-600 hover:scale-105 active:scale-95'}`
-                        }, (isCompleted[0] && isCompleted[1] && isCompleted[3]) ? '已完成' : (isAnimating[0] || isAnimating[1] || isAnimating[3]) ? '進行中...' : leftStarted ? '處理中' : '八神星門'),
-
-                        React.createElement('button', {
-                            key: 'right-button',
-                            onClick: startRightProcess,
-                            disabled: rightStarted,
-                            className: `w-20 h-20 rounded-full shadow-lg text-white font-bold text-sm transition-all duration-200 ${rightStarted ? 'bg-gray-400 cursor-not-allowed opacity-50' : 'bg-red-500 hover:bg-red-600 hover:scale-105 active:scale-95'}`
-                        }, (isCompleted[2] && isCompleted[4]) ? '已完成' : (isAnimating[2] || isAnimating[4]) ? '進行中...' : rightStarted ? '處理中' : '天干地支')
-                    ])
-                ]),
-
-                // 兩個最終結果顯示
-                React.createElement('div', {
-                    key: 'results',
-                    className: "flex flex-col lg:flex-row justify-center items-center gap-6 mb-8 w-full max-w-4xl mx-auto px-4"
-                }, [
-                    // 左側結果 - 八神星門八門
-                    React.createElement('div', {
-                        key: 'left-result',
-                        onClick: copyLeftResult,
-                        className: `flex-1 max-w-md p-6 bg-white border-2 border-indigo-200 rounded-lg shadow-lg transition-all duration-1000 ${(isCompleted[0] && isCompleted[1] && isCompleted[3]) ? 'transform scale-105 bg-gradient-to-r from-blue-100 to-indigo-100 border-indigo-400 shadow-2xl cursor-pointer hover:shadow-3xl hover:scale-110' : 'transform scale-100'} ${leftCopied ? 'bg-green-100 border-green-400' : ''}`,
-                        title: (isCompleted[0] && isCompleted[1] && isCompleted[3]) ? "點擊複製結果" : ""
-                    }, [
-                        React.createElement('h2', {
-                            key: 'left-title',
-                            className: "text-lg font-bold text-gray-800 mb-4 text-center"
-                        }, leftCopied ? '已複製！' : '八神星門八門結果'),
-                        React.createElement('div', {
-                            key: 'left-content',
-                            className: `text-base font-bold text-center break-words transition-all duration-1000 ${(isCompleted[0] && isCompleted[1] && isCompleted[3]) ? 'text-indigo-600 text-lg' : 'text-gray-600'} ${leftCopied ? 'text-green-600' : ''}`
-                        }, (isCompleted[0] && isCompleted[1] && isCompleted[3]) ? `問測[工作] [${getDisplayText(topNumber, numberToText)} + ${getDisplayText(middleNumber, numberToStar)} + ${getDisplayText(bottomNumber, numberToDoor)}] 未來趨勢如何?` : '問測[某事] [　　　　] 未來趨勢如何?'),
-                        (isCompleted[0] && isCompleted[1] && isCompleted[3] && !leftCopied) ? React.createElement('div', {
-                            key: 'left-hint',
-                            className: "text-xs text-gray-500 text-center mt-2"
-                        }, '點擊複製結果') : null
-                    ]),
-
-                    // 右側結果 - 數字變數
-                    React.createElement('div', {
-                        key: 'right-result',
-                        onClick: copyRightResult,
-                        className: `flex-1 max-w-md p-6 bg-white border-2 border-red-200 rounded-lg shadow-lg transition-all duration-1000 ${(isCompleted[2] && isCompleted[4]) ? 'transform scale-105 bg-gradient-to-r from-red-100 to-pink-100 border-red-400 shadow-2xl cursor-pointer hover:shadow-3xl hover:scale-110' : 'transform scale-100'} ${rightCopied ? 'bg-green-100 border-green-400' : ''}`,
-                        title: (isCompleted[2] && isCompleted[4]) ? "點擊複製結果" : ""
-                    }, [
-                        React.createElement('h2', {
-                            key: 'right-title',
-                            className: "text-lg font-bold text-gray-800 mb-4 text-center"
-                        }, rightCopied ? '已複製！' : '天干+地支 形成斷語'),
-                        React.createElement('div', {
-                            key: 'right-content',
-                            className: `text-base font-bold text-center break-words transition-all duration-1000 ${(isCompleted[2] && isCompleted[4]) ? 'text-red-600 text-lg' : 'text-gray-600'} ${rightCopied ? 'text-green-600' : ''}`
-                        }, (isCompleted[2] && isCompleted[4]) ? (() => {
-                            const tianGan = getDisplayText(middleRightNumber, numberToTianGan);
-                            const diZhi = getDisplayText(bottomRightNumber, numberToDiZhi);
-                            const explanation = getTianGanDiZhiExplanation(tianGan, diZhi);
-                            return explanation || `天干+地支組合 [${tianGan} + ${diZhi}]`;
-                        })() : '天干+地支組合 [　　　　]'),
-                        (isCompleted[2] && isCompleted[4] && !rightCopied) ? React.createElement('div', {
-                            key: 'right-hint',
-                            className: "text-xs text-gray-500 text-center mt-2"
-                        }, '點擊複製結果') : null
-                    ])
-                ]),
-
-                // 付費占卜按鈕
-                React.createElement('div', {
-                    key: 'paid-service',
-                    className: "mt-8 text-center"
-                }, [
-                    React.createElement('a', {
-                        key: 'paid-link',
-                        href: "https://soul-treasure.net/",
-                        target: "_blank",
-                        rel: "noopener noreferrer",
-                        className: "inline-block px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-lg rounded-full shadow-lg hover:from-purple-600 hover:to-pink-600 hover:scale-105 transform transition-all duration-300 hover:shadow-2xl"
-                    }, '申請付費線上占卜'),
-                    React.createElement('p', {
-                        key: 'paid-description',
-                        className: "text-sm text-gray-500 mt-2"
-                    }, '專業占卜師為您提供更詳細的解讀')
-                ])
-            ]);
+        async function copyToClipboard(text, setFlag){
+          try{ await navigator.clipboard.writeText(text); }
+          catch(_){
+            const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta);
+            ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+          }
+          setFlag(true); setTimeout(()=>setFlag(false),2000);
         }
 
-        // 渲染到頁面
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(React.createElement(RandomNumberPicker));
-    </script>
+        const gen = (idx) => {
+          if (isAnimating[idx] || isCompleted[idx]) return;
+          setIsAnimating(p=>{const a=p.slice(); a[idx]=true; return a;});
+
+          const interval = setInterval(()=>{
+            let n;
+            if(idx===1) n=Math.floor(Math.random()*9)+1;      // 星 1–9
+            else if(idx===2) n=Math.floor(Math.random()*7)+1; // 干 1–7
+            else if(idx===4) n=Math.floor(Math.random()*7)+1; // 支 1–7（示意）
+            else n=Math.floor(Math.random()*8)+1;             // 八神/八門 1–8
+
+            if(idx===0) setTopNumber(String(n));
+            else if(idx===1) setMiddleNumber(String(n));
+            else if(idx===2) setMiddleRightNumber(String(n));
+            else if(idx===3) setBottomNumber(String(n));
+            else setBottomRightNumber(String(n));
+          },100);
+
+          setTimeout(()=>{
+            clearInterval(interval);
+            let n;
+            if(idx===1) n=Math.floor(Math.random()*9)+1;
+            else if(idx===2) n=Math.floor(Math.random()*7)+1;
+            else if(idx===4) n=Math.floor(Math.random()*7)+1;
+            else n=Math.floor(Math.random()*8)+1;
+
+            if(idx===0) setTopNumber(String(n));
+            else if(idx===1) setMiddleNumber(String(n));
+            else if(idx===2) setMiddleRightNumber(String(n));
+            else if(idx===3) setBottomNumber(String(n));
+            else setBottomRightNumber(String(n));
+
+            setIsAnimating(p=>{const a=p.slice(); a[idx]=false; return a;});
+            setIsCompleted(p=>{const a=p.slice(); a[idx]=true; return a;});
+          },4000);
+        };
+
+        const startLeft = ()=>{
+          if(leftStarted) return;
+          setLeftStarted(true);
+          gen(0); setTimeout(()=>gen(1),4500); setTimeout(()=>gen(3),9000);
+        };
+        const startRight = ()=>{
+          if(rightStarted) return;
+          setRightStarted(true);
+          gen(2); setTimeout(()=>gen(4),4500);
+        };
+
+        const leftReady = isCompleted[0] && isCompleted[1] && isCompleted[3];
+        const rightReady = isCompleted[2] && isCompleted[4];
+
+        return e('div', { className:"flex flex-col items-center justify-center min-h-screen p-8" }, [
+          e('div', { className:"text-center mb-8 w-full flex flex-col items-center" }, [
+            e('h2', { className:"text-3xl font-bold text-gray-800 mb-2" }, '免費線上占卜'),
+            e('p', { className:"text-gray-600" }, '點擊按鈕隨機選擇八神、九星、八門'),
+            e('p', { className:"text-gray-500 text-sm mt-1" }, '得到結果後一鍵複製提示詞，帶到你喜好的 AI 助手解盤')
+          ]),
+
+          e('div', { className:"flex flex-col items-center space-y-6 mb-8" }, [
+            e('div', { className:"w-64 h-64 bg-white border-4 border-gray-300 rounded-lg shadow-lg flex flex-col items-center justify-center space-y-6" }, [
+              e('div', { className:"flex items-center justify-center" },
+                e('span', { className:`text-3xl font-bold text-indigo-600 transition-all duration-200 ${isAnimating[0]?'scale-110 text-orange-500':'scale-100'}` },
+                  getDisplayText(topNumber, numberToText))
+              ),
+              e('div', { className:"flex items-center space-x-4" }, [
+                e('span', { className:`text-3xl font-bold text-indigo-600 transition-all duration-200 ${isAnimating[1]?'scale-110 text-orange-500':'scale-100'}` },
+                  getDisplayText(middleNumber, numberToStar)),
+                e('span', { className:`text-2xl font-bold text-red-600 border-2 border-red-400 px-2 py-1 rounded transition-all duration-200 ${isAnimating[2]?'scale-110 text-orange-500 border-orange-400':'scale-100'}` },
+                  getDisplayText(middleRightNumber, numberToTianGan))
+              ]),
+              e('div', { className:"flex items-center space-x-4" }, [
+                e('span', { className:`text-3xl font-bold text-indigo-600 transition-all duration-200 ${isAnimating[3]?'scale-110 text-orange-500':'scale-100'}` },
+                  getDisplayText(bottomNumber, numberToDoor)),
+                e('span', { className:`text-2xl font-bold text-red-600 border-2 border-red-400 px-2 py-1 rounded transition-all duration-200 ${isAnimating[4]?'scale-110 text-orange-500 border-orange-400':'scale-100'}` },
+                  getDisplayText(bottomRightNumber, numberToDiZhi))
+              ])
+            ]),
+            e('div', { className:"flex space-x-4" }, [
+              e('button', {
+                onClick:startLeft, disabled:leftStarted,
+                className:`w-20 h-20 rounded-full shadow-lg text-white font-bold text-sm transition-all duration-200 ${leftStarted?'bg-gray-400 cursor-not-allowed opacity-50':'bg-indigo-500 hover:bg-indigo-600 hover:scale-105 active:scale-95'}`
+              }, leftReady ? '已完成' : (isAnimating[0]||isAnimating[1]||isAnimating[3]) ? '進行中...' : leftStarted ? '處理中' : '八神星門'),
+              e('button', {
+                onClick:startRight, disabled:rightStarted,
+                className:`w-20 h-20 rounded-full shadow-lg text-white font-bold text-sm transition-all duration-200 ${rightStarted?'bg-gray-400 cursor-not-allowed opacity-50':'bg-red-500 hover:bg-red-600 hover:scale-105 active:scale-95'}`
+              }, rightReady ? '已完成' : (isAnimating[2]||isAnimating[4]) ? '進行中...' : rightStarted ? '處理中' : '天干地支')
+            ])
+          ]),
+
+          e('div', { className:"flex flex-col lg:flex-row justify-center items-center gap-6 mb-8 w-full max-w-4xl mx-auto px-4" }, [
+            e('div', {
+              onClick: function(){
+                if(!leftReady) return;
+                const text = `問測[工作] [${getDisplayText(topNumber, numberToText)} + ${getDisplayText(middleNumber, numberToStar)} + ${getDisplayText(bottomNumber, numberToDoor)}] 未來趨勢如何?`;
+                copyToClipboard(text, setLeftCopied);
+              },
+              className:`flex-1 max-w-md p-6 bg-white border-2 border-indigo-200 rounded-lg shadow-lg transition-all duration-1000 ${leftReady?'transform scale-105 bg-gradient-to-r from-blue-100 to-indigo-100 border-indigo-400 shadow-2xl cursor-pointer hover:shadow-3xl hover:scale-110':'transform scale-100'} ${leftCopied?'bg-green-100 border-green-400':''}`,
+              title:leftReady?"點擊複製結果":""
+            }, [
+              e('h3', { className:"text-lg font-bold text-gray-800 mb-4 text-center" }, leftCopied ? '已複製！' : '八神星門八門結果'),
+              e('div', { className:`text-base font-bold text-center break-words transition-all duration-1000 ${leftReady?'text-indigo-600 text-lg':'text-gray-600'} ${leftCopied?'text-green-600':''}` },
+                leftReady ? `問測[工作] [${getDisplayText(topNumber, numberToText)} + ${getDisplayText(middleNumber, numberToStar)} + ${getDisplayText(bottomNumber, numberToDoor)}] 未來趨勢如何?` : '問測[某事] [　　　　] 未來趨勢如何?'),
+              leftReady && !leftCopied ? e('div', { className:"text-xs text-gray-500 text-center mt-2" }, '點擊複製結果') : null
+            ]),
+
+            e('div', {
+              onClick: function(){
+                if(!rightReady) return;
+                const tg = getDisplayText(middleRightNumber, numberToTianGan);
+                const dz = getDisplayText(bottomRightNumber, numberToDiZhi);
+                const exp = getTGZJ(tg, dz);
+                const text = exp || `天干+地支組合 [${tg} + ${dz}]`;
+                copyToClipboard(text, setRightCopied);
+              },
+              className:`flex-1 max-w-md p-6 bg-white border-2 border-red-200 rounded-lg shadow-lg transition-all duration-1000 ${rightReady?'transform scale-105 bg-gradient-to-r from-red-100 to-pink-100 border-red-400 shadow-2xl cursor-pointer hover:shadow-3xl hover:scale-110':'transform scale-100'} ${rightCopied?'bg-green-100 border-green-400':''}`,
+              title:rightReady?"點擊複製結果":""
+            }, [
+              e('h3', { className:"text-lg font-bold text-gray-800 mb-4 text-center" }, rightCopied ? '已複製！' : '天干+地支 形成斷語'),
+              e('div', { className:`text-base font-bold text-center break-words transition-all duration-1000 ${rightReady?'text-red-600 text-lg':'text-gray-600'} ${rightCopied?'text-green-600':''}` },
+                rightReady ? (function(){ const tg=getDisplayText(middleRightNumber, numberToTianGan); const dz=getDisplayText(bottomRightNumber, numberToDiZhi); const exp=getTGZJ(tg, dz); return exp || `天干+地支組合 [${tg} + ${dz}]`; })() : '天干+地支組合 [　　　　]'),
+              rightReady && !rightCopied ? e('div', { className:"text-xs text-gray-500 text-center mt-2" }, '點擊複製結果') : null
+            ])
+          ]),
+
+          e('div', { className:"mt-8 text-center" }, [
+            e('a', { href:"https://soul-treasure.net/", target:"_blank", rel:"noopener noreferrer",
+              className:"inline-block px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-lg rounded-full shadow-lg hover:from-purple-600 hover:to-pink-600 hover:scale-105 transform transition-all duration-300 hover:shadow-2xl"
+            }, '申請付費線上占卜'),
+            e('p', { className:"text-sm text-gray-500 mt-2" }, '專業占卜師為您提供更詳細的解讀')
+          ])
+        ]);
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(React.createElement(RandomNumberPicker));
+    })();
+  });
+  </script>
+
+  <!-- 3) 靜態 SEO 文字（放在 #root 外面，絕不會被 React 覆蓋） -->
+  <section id="seo-content" class="prose max-w-3xl mx-auto p-6">
+    <h1>免費線上占卜</h1>
+    <p>
+      這個「單宮奇門」小工具，會隨機產生 <strong>八神</strong>、<strong>九星</strong> 與 <strong>八門</strong> 的組合，
+      並提供天干地支對應的簡要斷語，適合用於快速靈感占測。你可以將「一鍵複製」的提示詞帶到你慣用的
+      AI 助手，延伸出更完整的解盤文字。此頁面專為「免費線上占卜」打造，免下載、免登入、隨點即用。
+    </p>
+
+    <h2>怎麼使用本工具</h2>
+    <ol>
+      <li>點「八神星門」按鈕：依序產生八神、九星、八門。</li>
+      <li>點「天干地支」按鈕：產生對應組合與斷語。</li>
+      <li>點擊結果卡片可「一鍵複製」提示詞，貼到 AI 助手解盤。</li>
+    </ol>
+
+    <h2>免費線上占卜 vs 付費占卜</h2>
+    <p>
+      免費線上工具適合快速釐清方向、探索可能，並體驗單宮奇門的博大精深；
+      當涉及重大決策（如資金投入、婚姻選擇、職涯轉換）或需要針對個人情境深入推演時，
+      建議選擇一對一付費諮詢，由專業占卜師結合盤局與背景進行完整分析。
+      （付費服務通常會同時解讀 <strong>4–6 個宮位</strong> 的綜合資訊，費用約 <strong>800–1300 台幣</strong>。）
+    </p>
+
+    <hr />
+
+    <h2>常見問題</h2>
+
+    <h3>Q1：結果準嗎？</h3>
+    <p>奇門遁甲講求「時、空、人事」三者匹配。本工具提供的是隨機生成的單宮局象，適合作為靈感與方向參考；若要獲得精確判斷，仍需結合實際情境與完整盤局分析。</p>
+
+    <h3>Q2：可以問哪些主題？</h3>
+    <p>常見問題包含：感情、工作、考試、合作、運勢等。問題描述越具體，AI 延伸解盤就越能精準聚焦。</p>
+
+    <h3>Q3：為何只顯示單宮？</h3>
+    <p>
+      這個免費模擬器屬於「輕量版」，主要目的在於體驗奇門遁甲的基本原理與趣味。
+      完整的專業奇門遁甲盤會包含天干、地支、三奇六儀、格局、隱干、暗干等多層次的符號與推演，
+      並透過多宮位的綜合解讀來判斷吉凶趨勢。
+      因此，本模擬器僅供學習參考與體驗之用，讓您在短時間內感受奇門遁甲的魅力。
+    </p>
+
+    <p class="text-sm text-gray-500">
+      免責聲明：本工具僅供娛樂與方向參考，重大決策請審慎評估或尋求專業諮詢。
+    </p>
+  </section>
+
+  <!-- 無腳本備援（也利於索引） -->
+  <noscript>
+    本頁包含一個免費線上占卜（單宮奇門）工具。若無法執行 JavaScript，仍可閱讀上方的使用說明與常見問題。
+  </noscript>
 </body>
 </html>
